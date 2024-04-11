@@ -22,3 +22,9 @@ Explore the following quantization techniques
 
 - [ ] Incremental network quantization
 - TBD
+
+# Development
+
+## ImageNet
+
+The `alexnet.py` script expects that the ImageNet dataset hosted on [Kaggle](https://www.kaggle.com/c/imagenet-object-localization-challenge/data) is available locally. The annotations and data are in separate directories, which means they'll need to be zipped together for validating the model. The data loader expects the locations of those two directories are available in the environment. They can be populated in [.env](.env) as `IMAGENET_ANNOTATIONS_DIR` and `IMAGENET_DATA_DIR`, respectively.
