@@ -92,11 +92,16 @@ class AlexNet:
     def predict(self, images):
         outputs = self.model(images)
         probabilities = torch.nn.functional.softmax(outputs, dim=1)
-        _top_prob, top_idx = torch.topk(probabilities, NUM_PREDICTIONS)
+        _, top_idx = torch.topk(probabilities, NUM_PREDICTIONS)
         return top_idx
 
     def to(self, device):
         self.model.to(device)
+
+
+def nonempty_intersection(tensor1, tensor2):
+    intersection_mask = torch.eq(tensor1.unsqueeze(1), tensor2)
+    return intersection_mask.any()
 
 
 if __name__ == "__main__":
@@ -117,27 +122,23 @@ if __name__ == "__main__":
     start_time = time.time()
     with torch.no_grad():
         checkpoint_start_time = time.time()
-        for images, labels in dataloader:
-            images = images.to(device)
-            labels = labels.to(device)
+        for image_batch, label_batch in dataloader:
+            image_batch = image_batch.to(device)
+            label_batch = label_batch.to(device)
+            prediction_batch = alexnet.predict(image_batch)
 
-            predictions = alexnet.predict(images)
-            for label in labels:
-                if label is PADDING_VALUE:
-                    continue
-
-                if label in predictions:
-                    correct += 1
-
+            for predictions, labels in zip(prediction_batch, label_batch):
                 total += 1
+                if nonempty_intersection(predictions, labels):
+                    correct += 1
 
             if total - last_checkpoint > 1000:
                 print(
-                    f"{total / len(imagenet) * 100:.2f}% complete. Time since last checkpoint: {time.time() - checkpoint_start_time:.1f}s"
+                    f"{total / len(imagenet) * 100:.1f}% complete. Time since last checkpoint: {time.time() - checkpoint_start_time:.1f}s"
                 )
                 last_checkpoint = total
                 checkpoint_start_time = time.time()
 
     accuracy = correct / total * 100
-    print(f"Top-{NUM_PREDICTIONS} accuracy: {accuracy}% ({correct} / {total})")
+    print(f"Top-{NUM_PREDICTIONS} accuracy: {accuracy:.1f}% ({correct} / {total})")
     print(f"Executed in {time.time() - start_time:.1f}s")
