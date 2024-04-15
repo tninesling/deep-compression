@@ -64,6 +64,6 @@ class KaggleImageNetDataset(Dataset):
             self.config.imagenet.annotations_dir,
             self.img_names[i].replace("JPEG", "xml"),
         )
-        annotation = Annotation(annotation_path, self.synsets)
+        annotation = Annotation(self.config, annotation_path, self.synsets)
 
         return self.transforms(img), annotation.synset_idx_tensor()
