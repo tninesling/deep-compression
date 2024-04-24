@@ -1,11 +1,11 @@
 import numpy as np
 import os
-import yaml
+import quanto
 import torch
+import yaml
 from config import Config
 from evaluator import TimedEvaluator
 from kaggle_imagenet import KaggleImageNetDataset
-from torch.quantization import QuantStub, DeQuantStub
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torchvision.models import AlexNet, AlexNet_Weights
 
@@ -15,27 +15,24 @@ from torchvision.models import AlexNet, AlexNet_Weights
 class QuantizedAlexNet(AlexNet):
     def __init__(self):
         super().__init__()
-        self.quant = QuantStub()
-        self.dequant = DeQuantStub()
 
     def forward(self, x):
-        out = self.quant(x)
-        out = super().forward(out)
-        out = self.dequant(out)
+        out = super().forward(x)
+        if isinstance(out, quanto.QTensor):
+            out = out.dequantize()
         return out
 
     def quantize(self):
-        self.qconfig = torch.quantization.default_qconfig
-        torch.quantization.prepare(self, inplace=True)
+        quanto.quantize(self, weights=quanto.qint8)
 
     def calibrate(self, data):
-        with torch.no_grad():
+        with quanto.Calibration():
             for image_batch, _ in data:
                 image_batch = image_batch.to(config.runtime.device)
                 self(image_batch)
 
     def freeze(self):
-        torch.quantization.convert(alexnet, inplace=True)
+        quanto.freeze(self)
 
     def print_size(self):
         torch.save(self.state_dict(), "temp.p")

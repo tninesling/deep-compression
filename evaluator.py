@@ -1,3 +1,4 @@
+import quanto
 import time
 import torch
 from config import Config
