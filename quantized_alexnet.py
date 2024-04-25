@@ -5,7 +5,7 @@ import torch
 from config import Config
 from evaluator import TimedEvaluator
 from kaggle_imagenet import KaggleImageNetDataset
-from torch.quantization import QuantStub, DeQuantStub
+from torch.quantization import MinMaxObserver, MovingAverageMinMaxObserver, MovingAveragePerChannelMinMaxObserver, PerChannelMinMaxObserver, QConfig, QuantStub, DeQuantStub
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torchvision.models import AlexNet, AlexNet_Weights
 
@@ -24,8 +24,10 @@ class QuantizedAlexNet(AlexNet):
         out = self.dequant(out)
         return out
 
-    def quantize(self):
-        self.qconfig = torch.quantization.default_qconfig
+    def quantize(self, weight_observer):
+        self.qconfig = QConfig(
+            activation=torch.quantization.default_observer,
+            weight=weight_observer)
         torch.quantization.prepare(self, inplace=True)
 
     def calibrate(self, data):
@@ -63,21 +65,33 @@ if __name__ == "__main__":
         sampler=subset_sampler,
     )
 
-    alexnet = QuantizedAlexNet()
-    alexnet.load_state_dict(AlexNet_Weights.IMAGENET1K_V1.get_state_dict())
-    alexnet.to(config.runtime.device)
+    observers = [
+        MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_affine),
+        MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),
+        MovingAverageMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_affine),
+        PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric), 
+        PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_affine),
+        MovingAveragePerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric), 
+        MovingAveragePerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_affine),
+    ]
 
-    print("Checking model size...")
-    alexnet.print_size()
+    for observer in observers:
+        print(f"Quantizing with qscheme: {observer}")
+        alexnet = QuantizedAlexNet()
+        alexnet.load_state_dict(AlexNet_Weights.IMAGENET1K_V1.get_state_dict())
+        alexnet.to(config.runtime.device)
 
-    print("Quantizing AlexNet...")
-    alexnet.quantize()
-    alexnet.calibrate(subset)
-    alexnet.freeze()
+        print("Checking model size...")
+        alexnet.print_size()
 
-    print("Checking post-quantization model size...")
-    alexnet.print_size()
+        print("Quantizing AlexNet...")
+        alexnet.quantize(observer)
+        alexnet.calibrate(subset)
+        alexnet.freeze()
 
-    print("Evaluating AlexNet...")
-    evaluator = TimedEvaluator(config)
-    evaluator.evaluate(dataloader, alexnet)
+        print("Checking post-quantization model size...")
+        alexnet.print_size()
+
+        print("Evaluating AlexNet...")
+        evaluator = TimedEvaluator(config)
+        evaluator.evaluate(dataloader, alexnet)
