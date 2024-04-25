@@ -1,3 +1,4 @@
 python-dotenv==1.0.1
+quanto==0.1.0
 torch==2.2.0
 torchvision==0.17.0
