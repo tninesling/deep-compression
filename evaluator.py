@@ -1,4 +1,3 @@
-import quanto
 import time
 import torch
 from config import Config
@@ -22,6 +21,7 @@ class Evaluator:
 
         self.correct_predictions = 0
         self.total_images = 0
+        start_time = time.time()
         with torch.no_grad():
             for image_batch, label_batch in dataloader:
                 image_batch = image_batch.to(self.config.runtime.device)
@@ -39,23 +39,17 @@ class Evaluator:
                     if self.should_report_progress(dataloader):
                         self.report_progress(dataloader)
 
+        return [
+            self.total_images,
+            self.correct_predictions,
+            self.correct_predictions / self.total_images * 100,
+            time.time() - start_time,
+        ]
+
     def should_report_progress(self, dataloader: DataLoader):
         ten_percent = len(dataloader.dataset) / 10
         return self.total_images % ten_percent == 0
 
     def report_progress(self, dataloader: DataLoader):
         progress_percent = self.total_images / len(dataloader.dataset) * 100
-        accuracy = self.correct_predictions / self.total_images * 100
-        print(
-            f"{progress_percent:.1f}% complete, {accuracy:.1f}% accurate (top-{self.config.runtime.num_predictions})"
-        )
-
-
-class TimedEvaluator(Evaluator):
-    def __init__(self, config):
-        super().__init__(config)
-
-    def evaluate(self, dataloader: DataLoader, model):
-        self.start_time = time.time()
-        super().evaluate(dataloader, model)
-        print(f"Executed in {time.time() - self.start_time:.1f}s")
+        print(f"{progress_percent:.1f}% complete")
