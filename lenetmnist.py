@@ -14,6 +14,7 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.quantization
 import torch.nn.utils.prune as prune
+import scipy.sparse as sp
 from torch.ao.quantization import QuantStub, DeQuantStub
 import os
 
@@ -64,12 +65,14 @@ class LeNet5(nn.Module):
     def evaluate(self):
       self.correct = 0
       self.total = 0
+      self.eval()
       with torch.no_grad():
           for inputs, labels in test_loader:
               outputs = self(inputs)
               _, predicted = torch.max(outputs.data, 1)
               self.total += labels.size(0)
               self.correct += (predicted == labels).sum().item()
+      return (100 * (1 - (self.correct / self.total)))
 
 #LeNet300 network
 class LeNet300(nn.Module):
@@ -116,93 +119,112 @@ class LeNet300(nn.Module):
               _, predicted = torch.max(outputs.data, 1)
               self.total += labels.size(0)
               self.correct += (predicted == labels).sum().item()
+      return (100 * (1 - (self.correct / self.total)))
+
+#get dataset and normalize
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.1307,), (0.3081,))
+])
+train_dataset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+test_dataset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
+
+#initialize models
+# model5 = LeNet5(False)
+model300 = LeNet300(False)
+
+#train models
+# model5.train()
+model300.train()
+
+#save trained models
+# torch.save(model5.state_dict(), "trainedModel5.p")
+torch.save(model300.state_dict(), "trainedModel300.p")
+
+#print model size without quantization
+# print('Size no quantization LeNet5 (MB):', os.path.getsize("noquant.p")/1e6)
 
 if __name__ == "__main__":
-  #get dataset and normalize
-  transform = transforms.Compose([
-      transforms.ToTensor(),
-      transforms.Normalize((0.1307,), (0.3081,))
-  ])
-  train_dataset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-  test_dataset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-  train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
-  test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
-
-  #initialize models
-  # model5quant = LeNet5(True)
-  # model5noquant = LeNet5(False)
-
-  model300quant = LeNet300(True)
-  # model300noquant = LeNet300(False)
-
-  #print model size without quantization
-  # torch.save(model5noquant.state_dict(), "noquant.p")
-  # print('Size no quantization LeNet5 (MB):', os.path.getsize("noquant.p")/1e6)
-  # os.remove('noquant.p')
-
-  # torch.save(model300noquant.state_dict(), "noquant.p")
-  # print('Size no quantization LeNet300 (MB):', os.path.getsize("noquant.p")/1e6)
-  # os.remove('noquant.p')
-
-  #pretraining quantization
-  # model5quant.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
-  # torch.quantization.prepare_qat(model5quant, inplace=True)
-
-  model300quant.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
-  torch.quantization.prepare_qat(model300quant, inplace=True)
-
-  #train models
-  # model5quant.train()
-  # model5noquant.train()
-
-  model300quant.train()
-  # model300noquant.train()
-
-  # # Apply compression to remove small weights
-  # prune.global_unstructured(
-  #   model300quant.parameters,
-  #   pruning_method=prune.L1Unstructured,
-  #   amount=0.2,
-  # )
+  print('Size no pruning LeNet300 (MB):', os.path.getsize("trainedModel300noquant.p")/1e6)
+  print('Top1 error on LeNet300 no prune: %f %%' % (model300.evaluate()))
 
 
-  # for name, module in model300quant.named_modules():
-  #   if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
-  #       module.weight = nn.Parameter(module.weight.to_sparse().coalesce())
+  #########L1 unstructured pruning##############
 
-  #post training quantization
-  # torch.quantization.convert(model5quant, inplace=True)
-  torch.quantization.convert(model300quant, inplace=True)
+  model300l1u= LeNet300(False)
+  model300l1u.load_state_dict(torch.load("trainedModel300.p"))
 
-  for name, module in model300quant.named_modules():
+
+  for name, module in model300l1u.named_modules():
     if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
-      prune.random_unstructured(module, name="weight", amount=0.3)
+      prune.l1_unstructured(module, name="weight", amount=0.1)
+      prune.remove(module, 'weight')
 
-  # Convert pruned weights to CSR format
-  for name, module in model300quant.named_modules():
-      if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
-          prune.remove(module, 'weight')
-          module.weight = nn.Parameter(module.weight.to_sparse().coalesce())
-
-  #print size after quantization
-  # torch.save(model5quant.state_dict(), "quant.p")
-  # print('Size quantized LeNet5 (MB):', os.path.getsize("quant.p")/1e6)
-  # os.remove('quant.p')
-
-  torch.save(model300quant.state_dict(), "quant.p")
-  print('Size quantized LeNet300 (MB):', os.path.getsize("quant.p")/1e6)
+  torch.save(model300l1u.state_dict(), "quant.p")
+  print('Size after l1 unstructured pruning LeNet300 (MB):', os.path.getsize("quant.p")/1e6)
   os.remove('quant.p')
 
-  #evaluate models
-  # model5quant.evaluate()
-  # model5noquant.evaluate()
+  print('Top1 error on LeNet300 l1 unstructured: %f %%' % (model300l1u.evaluate()))
 
-  model300quant.evaluate()
-  # model300noquant.evaluate()
+  ##########random unstructured pruning############
 
-  #print results
-  # print('Top1 error on LeNet5: %f %%' % (100 * (1 - (model5noquant.correct / model5noquant.total))))
-  # print('Top1 error on LeNet5 quantized: %f %%' % (100 * (1 - (model5quant.correct / model5quant.total))))
+  model300ru = LeNet300(False)
+  model300ru.load_state_dict(torch.load("trainedModel300.p"))
 
-  # print('Top1 error on LeNet300: %f %%' % (100 * (1 - (model300noquant.correct / model300noquant.total))))
-  print('Top1 error on LeNet300 quantized: %f %%' % (100 * (1 - (model300quant.correct / model300quant.total))))
+  for name, module in model300ru.named_modules():
+    if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
+      prune.random_unstructured(module, name="weight", amount=0.1)
+      prune.remove(module, 'weight')
+
+  torch.save(model300ru.state_dict(), "quant.p")
+  print('Size after random unstructured pruning LeNet300 (MB):', os.path.getsize("quant.p")/1e6)
+  os.remove('quant.p')
+
+  print('Top1 error on LeNet300 random unstructured: %f %%' % (model300ru.evaluate()))
+
+  ##########ln structured pruning############
+
+  model300lns = LeNet300(False)
+  model300lns.load_state_dict(torch.load("trainedModel300.p"))
+
+  for name, module in model300lns.named_modules():
+    if isinstance(module, torch.nn.Conv2d):
+      prune.ln_structured(module, name="weight", amount=0.1, n=2, dim=0)
+      prune.remove(module, 'weight')
+
+  torch.save(model300lns.state_dict(), "quant.p")
+  print('Size after ln structured pruning LeNet300 (MB):', os.path.getsize("quant.p")/1e6)
+  os.remove('quant.p')
+
+  print('Top1 error on LeNet300 ln structured: %f %%' % (model300lns.evaluate()))
+
+  ##########random structured pruning############
+
+  model300rs = LeNet300(False)
+  model300rs.load_state_dict(torch.load("trainedModel300.p"))
+
+  for name, module in model300rs.named_modules():
+    if isinstance(module, torch.nn.Conv2d):
+      prune.random_structured(module, name="weight", amount=0.1, dim=0)
+      prune.remove(module, 'weight')
+
+  torch.save(model300rs.state_dict(), "quant.p")
+  print('Size after random structured pruning LeNet300 (MB):', os.path.getsize("quant.p")/1e6)
+  os.remove('quant.p')
+
+  print('Top1 error on LeNet300 random structured: %f %%' % (model300rs.evaluate()))
+
+  #post training quantization
+
+  # model300quant.qconfig = torch.quantization.default_qconfig
+  # torch.quantization.prepare(model300quant, inplace=True)
+  # model300quant.evaluate()
+  # torch.quantization.convert(model300quant, inplace=True)
+
+  # # Convert pruned weights to CSR format
+  # for name, module in model300quant.named_modules():
+  #     if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
+  #         prune.remove(module, 'weight')
+  #         module.weight = nn.Parameter(module.weight.to_sparse().coalesce())
