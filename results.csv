@@ -1,2 +1,0 @@
-alexnet_no_prune_affine_minmax_per_channel,61.31139,50000,38794,77.58800000000001,145.48609399795532
-alexnet_no_prune_affine_minmax_per_tensor,61.142846,50000,38895,77.79,160.67228364944458
