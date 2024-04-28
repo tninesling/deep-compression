@@ -19,7 +19,8 @@ class Evaluator:
         model.eval()
         model.to(self.config.runtime.device)
 
-        self.correct_predictions = 0
+        self.correct_predictions_top1 = 0
+        self.correct_predictions_top5 = 0
         self.total_images = 0
         start_time = time.time()
         with torch.inference_mode():
@@ -28,21 +29,23 @@ class Evaluator:
                 label_batch = label_batch.to(self.config.runtime.device)
                 outputs = model(image_batch)
                 _, prediction_batch = torch.topk(
-                    outputs, self.config.runtime.num_predictions
+                    outputs, 5, sorted=True
                 )
 
                 for predictions, labels in zip(prediction_batch, label_batch):
                     self.total_images += 1
+                    if nonempty_intersection(predictions[0:1], labels):
+                        self.correct_predictions_top1 += 1
                     if nonempty_intersection(predictions, labels):
-                        self.correct_predictions += 1
+                        self.correct_predictions_top5 += 1
 
                     if self.should_report_progress(dataloader):
                         self.report_progress(dataloader)
 
         return [
             self.total_images,
-            self.correct_predictions,
-            self.correct_predictions / self.total_images * 100,
+            self.correct_predictions_top1,
+            self.correct_predictions_top5,
             time.time() - start_time,
         ]
 

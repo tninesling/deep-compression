@@ -87,7 +87,7 @@ if __name__ == "__main__":
                     size = get_size_mb(candidate)
                     print(f"Model size: {size:.3f} MB")
                     evaluator = Evaluator(config)
-                    [total_images, correct_predictions, accuracy, execution_time] = (
+                    [total_images, correct_predictions_top1, correct_predictions_top5, execution_time] = (
                         evaluator.evaluate(dataloader, candidate)
                     )
                     results.append(
@@ -95,13 +95,15 @@ if __name__ == "__main__":
                             name,
                             size,
                             total_images,
-                            correct_predictions,
-                            accuracy,
+                            correct_predictions_top1,
+                            correct_predictions_top5,
+                            correct_predictions_top1 / total_images * 100,
+                            correct_predictions_top5 / total_images * 100,
                             execution_time,
                         ]
                     )
                     print(
-                        f"Evaluation complete. Accuracy {accuracy:.1f}%, time {execution_time:.3f}s"
+                        f"Evaluation complete. Accuracy {correct_predictions_top5 / total_images * 100:.1f}% (top5), time {execution_time:.3f}s"
                     )
                 except Exception as e:
                     print(f"{name} failed: {e}")
@@ -109,6 +111,6 @@ if __name__ == "__main__":
     with open("results.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(
-            ["name", "size (MB)", "total", "correct", "accuracy %", "time (s)"]
+            ["name", "size (MB)", "total", "correct (top1)", "correct (top5)", "accuracy % (top1)", "accuracy % (top5)" "time (s)"]
         )
         writer.writerows(results)
