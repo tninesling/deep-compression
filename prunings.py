@@ -35,3 +35,11 @@ def global_unstructured_prune(model):
     if isinstance(module, nn.Linear):
         prune.remove(module, 'weight')
   return model
+
+def ln_structured_prune(model):
+  for name, module in model.named_modules():
+    if isinstance(module, torch.nn.Conv2d):
+      prune.ln_structured(module, name="weight", amount=prune_amount, n=2, dim=0)
+      prune.remove(module, 'weight')
+  return model
+
