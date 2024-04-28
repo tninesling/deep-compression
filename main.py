@@ -6,8 +6,13 @@ import torch
 from config import Config
 from copy import deepcopy
 from dataloaders import kaggle_imagenet_loader
-from models import alexnet, vgg16
-from prunings import no_prune
+from models import leNet5, leNet300, alexnet, vgg16
+from prunings import (
+    no_prune,
+    l1_unstructured_prune,
+    random_unstructured_prune,
+    global_unstructured_prune,
+)
 from evaluator import Evaluator
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
@@ -34,8 +39,13 @@ def get_calibration_data(config: Config, dataloader: DataLoader):
 if __name__ == "__main__":
     config = Config()
     dataloaders = [kaggle_imagenet_loader, kaggle_imagenet_loader]
-    models = [alexnet] #, vgg16]
-    prunings = [no_prune]
+    models = [leNet5, leNet300, alexnet]  # , vgg16]
+    prunings = [
+        no_prune,
+        l1_unstructured_prune,
+        random_unstructured_prune,
+        global_unstructured_prune,
+    ]
     quantizations = [
         # quantizations.no_quantize,
         quantizations.affine_minmax_per_channel,
