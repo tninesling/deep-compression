@@ -23,5 +23,4 @@ mnist_loader = DataLoader(
     mnist_dataset,
     batch_size=_config.runtime.batch_size,
     num_workers=_config.runtime.num_workers,
-    shuffle=False,
 )

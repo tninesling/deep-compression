@@ -26,7 +26,7 @@ def get_size_mb(model):
 
 def get_calibration_data(config: Config, dataloader: DataLoader):
     dataset = dataloader.dataset
-    subset_indices = np.random.choice(len(dataset), 100, replace=False)
+    subset_indices = np.random.choice(len(dataset), 1000, replace=False)
     subset_sampler = SubsetRandomSampler(subset_indices)
     return DataLoader(
         dataset,
@@ -53,13 +53,13 @@ if __name__ == "__main__":
     ]
     quantizations = [
         quantizations.no_quantize,
-        quantizations.affine_histogram_per_tensor,
-        quantizations.affine_minmax_per_channel,
-        quantizations.affine_minmax_per_tensor,
-        quantizations.affine_moving_avg_per_channel,
-        quantizations.affine_moving_avg_per_tensor,
+        # quantizations.affine_histogram_per_tensor,
+        # quantizations.affine_minmax_per_channel,
+        # quantizations.affine_minmax_per_tensor,
+        # quantizations.affine_moving_avg_per_channel,
+        # quantizations.affine_moving_avg_per_tensor,
         quantizations.symmetric_histogram_per_tensor,
-        quantizations.symmetric_minmax_per_channel,
+        # quantizations.symmetric_minmax_per_channel,
         quantizations.symmetric_minmax_per_tensor,
         quantizations.symmetric_moving_avg_per_channel,
     ]
@@ -75,7 +75,9 @@ if __name__ == "__main__":
                 try:
                     print(f"Case: {name}")
                     candidate = deepcopy(model)
+                    print("Pruning model...")
                     candidate = prune(candidate)
+                    print("Quantizing model...")
                     candidate = quantize(
                         candidate,
                         calibration_data,
