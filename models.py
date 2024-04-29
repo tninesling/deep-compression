@@ -52,8 +52,8 @@ class LeNet300(nn.Module):
 
 leNet5 = LeNet5()
 leNet5.load_state_dict(torch.load("trained_models/trainedModel5.p"))
-leNet5.__name__ = "LeNet5"
+leNet5.__name__ = "lenet5"
 
 leNet300 = LeNet300()
 leNet300.load_state_dict(torch.load("trained_models/trainedModel300.p"))
-leNet300.__name__ = "LeNet300"
+leNet300.__name__ = "lenet300"

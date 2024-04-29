@@ -1,18 +1,13 @@
 import csv
 import numpy as np
 import os
+import prunings
 import quantizations
 import torch
 from config import Config
 from copy import deepcopy
 from dataloaders import kaggle_imagenet_loader, mnist_loader
 from models import leNet5, leNet300, alexnet, vgg16
-from prunings import (
-    no_prune,
-    l1_unstructured_prune,
-    random_unstructured_prune,
-    global_unstructured_prune,
-)
 from evaluator import Evaluator
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
@@ -46,10 +41,9 @@ if __name__ == "__main__":
     ]
     models = [leNet5, leNet300, alexnet]  # , vgg16]
     prunings = [
-        no_prune,
-        l1_unstructured_prune,
-        random_unstructured_prune,
-        global_unstructured_prune,
+        prunings.no_prune,
+        prunings.l1_unstructured_prune,
+        prunings.ln_structured_prune,
     ]
     quantizations = [
         quantizations.no_quantize,
@@ -70,10 +64,10 @@ if __name__ == "__main__":
 
         for prune in prunings:
             for quantize in quantizations:
-                name = f"{model.__name__}_{prune.__name__}_{quantize.__name__}"
+                case = f"{model.__name__}_{prune.__name__}_{quantize.__name__}"
 
                 try:
-                    print(f"Case: {name}")
+                    print(f"Case: {case}")
                     candidate = deepcopy(model)
                     print("Pruning model...")
                     candidate = prune(candidate)
@@ -87,12 +81,17 @@ if __name__ == "__main__":
                     size = get_size_mb(candidate)
                     print(f"Model size: {size:.3f} MB")
                     evaluator = Evaluator(config)
-                    [total_images, correct_predictions_top1, correct_predictions_top5, execution_time] = (
-                        evaluator.evaluate(dataloader, candidate)
-                    )
+                    [
+                        total_images,
+                        correct_predictions_top1,
+                        correct_predictions_top5,
+                        execution_time,
+                    ] = evaluator.evaluate(dataloader, candidate)
                     results.append(
                         [
-                            name,
+                            model.__name__,
+                            prune.__name__,
+                            quantize.__name__,
                             size,
                             total_images,
                             correct_predictions_top1,
@@ -106,11 +105,22 @@ if __name__ == "__main__":
                         f"Evaluation complete. Accuracy {correct_predictions_top5 / total_images * 100:.1f}% (top5), time {execution_time:.3f}s"
                     )
                 except Exception as e:
-                    print(f"{name} failed: {e}")
+                    print(f"{case} failed: {e}")
 
     with open("results.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(
-            ["name", "size (MB)", "total", "correct (top1)", "correct (top5)", "accuracy % (top1)", "accuracy % (top5)" "time (s)"]
+            [
+                "model",
+                "pruning",
+                "quantization",
+                "size (MB)",
+                "total",
+                "correct (top1)",
+                "correct (top5)",
+                "accuracy % (top1)",
+                "accuracy % (top5)",
+                "time (s)",
+            ]
         )
         writer.writerows(results)
