@@ -39,23 +39,19 @@ if __name__ == "__main__":
         kaggle_imagenet_loader,
         kaggle_imagenet_loader,
     ]
-    models = [leNet5, leNet300, alexnet]  # , vgg16]
+    models = [leNet5, leNet300, alexnet, vgg16]
     prunings = [
         prunings.no_prune,
         prunings.l1_unstructured_prune,
-        prunings.ln_structured_prune,
+        prunings.l1_structured_prune_0_05,
+        prunings.l2_structured_prune_0_05,
+        prunings.l3_structured_prune_0_05,
     ]
     quantizations = [
         quantizations.no_quantize,
-        # quantizations.affine_histogram_per_tensor,
-        # quantizations.affine_minmax_per_channel,
-        # quantizations.affine_minmax_per_tensor,
-        # quantizations.affine_moving_avg_per_channel,
-        # quantizations.affine_moving_avg_per_tensor,
-        quantizations.symmetric_histogram_per_tensor,
-        # quantizations.symmetric_minmax_per_channel,
+        quantizations.affine_minmax_per_tensor,
+        quantizations.symmetric_minmax_per_channel,
         quantizations.symmetric_minmax_per_tensor,
-        quantizations.symmetric_moving_avg_per_channel,
     ]
     results = []
 

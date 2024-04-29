@@ -28,9 +28,7 @@ class Evaluator:
                 image_batch = image_batch.to(self.config.runtime.device)
                 label_batch = label_batch.to(self.config.runtime.device)
                 outputs = model(image_batch)
-                _, prediction_batch = torch.topk(
-                    outputs, 5, sorted=True
-                )
+                _, prediction_batch = torch.topk(outputs, 5, sorted=True)
 
                 for predictions, labels in zip(prediction_batch, label_batch):
                     self.total_images += 1
@@ -55,4 +53,6 @@ class Evaluator:
 
     def report_progress(self, dataloader: DataLoader):
         progress_percent = self.total_images / len(dataloader.dataset) * 100
-        print(f"{progress_percent:.1f}% complete")
+        print(
+            f"{progress_percent:.1f}% complete; top-5 accuracy {self.correct_predictions_top5 / self.total_images * 100:.1f}"
+        )
