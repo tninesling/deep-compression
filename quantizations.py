@@ -1,4 +1,6 @@
+import quanto
 import torch
+from config import config
 from torch.quantization import (
     default_observer,
     HistogramObserver,
@@ -11,7 +13,6 @@ from torch.quantization import (
 )
 
 # See https://pytorch.org/blog/quantization-in-practice/#affine-and-symmetric-quantization-schemes
-
 
 def no_quantize(model, calibration_data):
     return model
@@ -117,3 +118,25 @@ def symmetric_histogram_per_tensor(model, calibration_data):
             dtype=torch.qint8, qscheme=torch.per_tensor_symmetric
         ),
     )
+
+def _quanto_quantize(model, calibration_data, weights_dtype):
+    quanto.quantize(model, weights=weights_dtype)
+    with quanto.Calibration():
+        for batch, labels in calibration_data:
+            batch = batch.to(config.runtime.device)
+            labels = labels.to(config.runtime.device)
+            model(batch)
+    quanto.freeze(model)
+    return model
+
+def quanto_int8_quantize(model, calibration_data):
+    return _quanto_quantize(model, calibration_data, quanto.qint8)
+
+def quanto_int4_quantize(model, calibration_data):
+    return _quanto_quantize(model, calibration_data, quanto.qint4)
+
+def quanto_int2_quantize(model, calibration_data):
+    return _quanto_quantize(model, calibration_data, quanto.qint2)
+
+def quanto_float8_quantize(model, calibration_data):
+    return _quanto_quantize(model, calibration_data, quanto.qfloat8)

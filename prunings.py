@@ -49,46 +49,27 @@ def global_unstructured_prune(model):
             prune.remove(module, "weight")
     return model
 
-
-def ln_structured_prune(model):
-    for name, module in model.named_modules():
-        if isinstance(module, torch.nn.Conv2d):
-            prune.ln_structured(
-                module, name="weight", amount=0.1, n=float("-inf"), dim=0
-            )
-            prune.remove(module, "weight")
-    return model
-
-
-def _ln_structured_prune(model, amount, n):
+def ln_structured_prune(model, amount, n):
+    print(f"Pruning {amount * 100}% of weights using L{n} norm")
     count_unpruned_weights(model)
-    for name, module in model.named_modules():
-        if isinstance(module, torch.nn.Conv2d):
+    for _, module in model.named_modules():
+        if hasattr(module, "weight") and isinstance(module.weight, torch.Tensor):
             prune.ln_structured(module, name="weight", amount=amount, n=n, dim=0)
             prune.remove(module, "weight")
     count_unpruned_weights(model)
     return model
 
+def l1_structured_prune_one_percent(model):
+    return ln_structured_prune(model, 0.01, 1)
 
-def l1_structured_prune_0_1(model):
-    return _ln_structured_prune(model, 0.1, 1)
+def l1_structured_prune_two_percent(model):
+    return ln_structured_prune(model, 0.02, 1)
 
+def l1_structured_prune_three_percent(model):
+    return ln_structured_prune(model, 0.03, 1)
 
-def l1_structured_prune_0_05(model):
-    return _ln_structured_prune(model, 0.05, 1)
+def l1_structured_prune_four_percent(model):
+    return ln_structured_prune(model, 0.04, 1)
 
-
-def l2_structured_prune_0_1(model):
-    return _ln_structured_prune(model, 0.1, 2)
-
-
-def l2_structured_prune_0_05(model):
-    return _ln_structured_prune(model, 0.05, 2)
-
-
-def l3_structured_prune_0_1(model):
-    return _ln_structured_prune(model, 0.1, 3)
-
-
-def l3_structured_prune_0_05(model):
-    return _ln_structured_prune(model, 0.05, 3)
+def l1_structured_prune_five_percent(model):
+    return ln_structured_prune(model, 0.05, 1)

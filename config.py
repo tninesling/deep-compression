@@ -25,3 +25,5 @@ class RuntimeConfig:
         )
         self.num_predictions = int(os.getenv("NUM_PREDICTIONS"))
         self.num_workers = int(os.getenv("NUM_WORKERS") or os.cpu_count())
+
+config = Config()

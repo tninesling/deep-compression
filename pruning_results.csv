@@ -1,0 +1,26 @@
+model,pruning,quantization,size (MB),total,correct (top1),correct (top5),accuracy % (top1),accuracy % (top5),time (s)
+alexnet,l1_structured_prune_one_percent,no_quantize,244.408362,5000,2754,3864,55.08,77.28,4.088695287704468
+alexnet,l1_structured_prune_two_percent,no_quantize,244.408362,5000,2692,3820,53.839999999999996,76.4,4.084943532943726
+alexnet,l1_structured_prune_three_percent,no_quantize,244.408362,5000,2536,3634,50.72,72.68,4.0702855587005615
+alexnet,l1_structured_prune_four_percent,no_quantize,244.408362,5000,2440,3581,48.8,71.61999999999999,4.064819097518921
+alexnet,l1_structured_prune_five_percent,no_quantize,244.408362,5000,2260,3403,45.2,68.06,4.098972797393799
+alexnet,l2_structured_prune_one_percent,no_quantize,244.408362,5000,2749,3892,54.98,77.84,4.102370500564575
+alexnet,l2_structured_prune_two_percent,no_quantize,244.408362,5000,2700,3823,54.0,76.46,4.092153310775757
+alexnet,l2_structured_prune_three_percent,no_quantize,244.408362,5000,2585,3713,51.7,74.26,4.087706089019775
+alexnet,l2_structured_prune_four_percent,no_quantize,244.408362,5000,2447,3579,48.94,71.58,4.09695291519165
+alexnet,l2_structured_prune_five_percent,no_quantize,244.408362,5000,2308,3470,46.160000000000004,69.39999999999999,4.107731103897095
+alexnet,l3_structured_prune_one_percent,no_quantize,244.408362,5000,2758,3911,55.16,78.22,4.117045164108276
+alexnet,l3_structured_prune_two_percent,no_quantize,244.408362,5000,2713,3860,54.26,77.2,4.106359004974365
+alexnet,l3_structured_prune_three_percent,no_quantize,244.408362,5000,2598,3738,51.959999999999994,74.76,4.089623689651489
+alexnet,l3_structured_prune_four_percent,no_quantize,244.408362,5000,2527,3663,50.54,73.26,4.09264874458313
+alexnet,l3_structured_prune_five_percent,no_quantize,244.408362,5000,2438,3564,48.76,71.28,4.1233580112457275
+alexnet,l4_structured_prune_one_percent,no_quantize,244.408362,5000,2775,3916,55.50000000000001,78.32000000000001,4.104727745056152
+alexnet,l4_structured_prune_two_percent,no_quantize,244.408362,5000,2729,3852,54.58,77.03999999999999,4.112273216247559
+alexnet,l4_structured_prune_three_percent,no_quantize,244.408362,5000,2603,3739,52.059999999999995,74.78,4.0972301959991455
+alexnet,l4_structured_prune_four_percent,no_quantize,244.408362,5000,2551,3668,51.019999999999996,73.36,4.10045599937439
+alexnet,l4_structured_prune_five_percent,no_quantize,244.408362,5000,2437,3573,48.74,71.46000000000001,4.107877731323242
+alexnet,l5_structured_prune_one_percent,no_quantize,244.408362,5000,2780,3916,55.60000000000001,78.32000000000001,4.0828752517700195
+alexnet,l5_structured_prune_two_percent,no_quantize,244.408362,5000,2712,3831,54.24,76.62,4.113399028778076
+alexnet,l5_structured_prune_three_percent,no_quantize,244.408362,5000,2628,3764,52.559999999999995,75.28,4.120104074478149
+alexnet,l5_structured_prune_four_percent,no_quantize,244.408362,5000,2536,3667,50.72,73.34,4.088025331497192
+alexnet,l5_structured_prune_five_percent,no_quantize,244.408362,5000,2442,3570,48.84,71.39999999999999,4.136932611465454

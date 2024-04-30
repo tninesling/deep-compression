@@ -34,24 +34,22 @@ def get_calibration_data(config: Config, dataloader: DataLoader):
 if __name__ == "__main__":
     config = Config()
     dataloaders = [
-        mnist_loader,
-        mnist_loader,
+        #mnist_loader,
+        #mnist_loader,
         kaggle_imagenet_loader,
         kaggle_imagenet_loader,
     ]
-    models = [leNet5, leNet300, alexnet, vgg16]
+    models = [alexnet] # [leNet5, leNet300, alexnet, vgg16]
     prunings = [
-        prunings.no_prune,
-        prunings.l1_unstructured_prune,
-        prunings.l1_structured_prune_0_05,
-        prunings.l2_structured_prune_0_05,
-        prunings.l3_structured_prune_0_05,
+        prunings.l1_structured_prune_one_percent,
+        prunings.l1_structured_prune_two_percent,
+        prunings.l1_structured_prune_three_percent,
+        prunings.l1_structured_prune_four_percent,
+        prunings.l1_structured_prune_five_percent,
+
     ]
     quantizations = [
         quantizations.no_quantize,
-        quantizations.affine_minmax_per_tensor,
-        quantizations.symmetric_minmax_per_channel,
-        quantizations.symmetric_minmax_per_tensor,
     ]
     results = []
 
@@ -65,6 +63,7 @@ if __name__ == "__main__":
                 try:
                     print(f"Case: {case}")
                     candidate = deepcopy(model)
+                    candidate.to(config.runtime.device)
                     print("Pruning model...")
                     candidate = prune(candidate)
                     print("Quantizing model...")
