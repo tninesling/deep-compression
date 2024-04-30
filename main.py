@@ -34,22 +34,24 @@ def get_calibration_data(config: Config, dataloader: DataLoader):
 if __name__ == "__main__":
     config = Config()
     dataloaders = [
-        #mnist_loader,
-        #mnist_loader,
+        mnist_loader,
+        mnist_loader,
         kaggle_imagenet_loader,
         kaggle_imagenet_loader,
     ]
-    models = [alexnet] # [leNet5, leNet300, alexnet, vgg16]
+    models = [leNet5, leNet300, alexnet, vgg16]
     prunings = [
+        prunings.no_prune,
+        prunings.l1_unstructured_prune,
         prunings.l1_structured_prune_one_percent,
-        prunings.l1_structured_prune_two_percent,
-        prunings.l1_structured_prune_three_percent,
-        prunings.l1_structured_prune_four_percent,
         prunings.l1_structured_prune_five_percent,
-
+        prunings.random_unstructured_prune,
     ]
     quantizations = [
         quantizations.no_quantize,
+        quantizations.quanto_int4_quantize,
+        quantizations.quanto_int8_quantize,
+        quantizations.quanto_float8_quantize,
     ]
     results = []
 

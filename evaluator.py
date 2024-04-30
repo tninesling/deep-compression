@@ -23,7 +23,7 @@ class Evaluator:
         self.correct_predictions_top5 = 0
         self.total_images = 0
         start_time = time.time()
-        with torch.inference_mode():
+        with torch.no_grad():
             for image_batch, label_batch in dataloader:
                 image_batch = image_batch.to(self.config.runtime.device)
                 label_batch = label_batch.to(self.config.runtime.device)
