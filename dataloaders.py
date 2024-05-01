@@ -5,11 +5,11 @@ from kaggle_imagenet import KaggleImageNetDataset
 from torch.utils.data import DataLoader
 
 _config = Config()
-kaggle_imagenet_loader = DataLoader(
-    KaggleImageNetDataset(_config),
-    batch_size=_config.runtime.batch_size,
-    num_workers=_config.runtime.num_workers,
-)
+# kaggle_imagenet_loader = DataLoader(
+#     KaggleImageNetDataset(_config),
+#     batch_size=_config.runtime.batch_size,
+#     num_workers=_config.runtime.num_workers,
+# )
 
 mnist_dataset = torchvision.datasets.MNIST(
     root="./data",

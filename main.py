@@ -4,9 +4,10 @@ import os
 import prunings
 import quantizations
 import torch
+import pandas as pd
 from config import Config
 from copy import deepcopy
-from dataloaders import kaggle_imagenet_loader, mnist_loader
+from dataloaders import mnist_loader
 from models import leNet5, leNet300, alexnet, vgg16
 from evaluator import Evaluator
 from torch.utils.data import DataLoader, SubsetRandomSampler
@@ -36,10 +37,10 @@ if __name__ == "__main__":
     dataloaders = [
         mnist_loader,
         mnist_loader,
-        kaggle_imagenet_loader,
-        kaggle_imagenet_loader,
+        # kaggle_imagenet_loader,
+        # kaggle_imagenet_loader,
     ]
-    models = [leNet5, leNet300, alexnet, vgg16]
+    models = [leNet5, leNet300]
     prunings = [
         prunings.no_prune,
         prunings.l1_unstructured_prune,
@@ -121,3 +122,19 @@ if __name__ == "__main__":
             ]
         )
         writer.writerows(results)
+
+# df = pd.read_csv("results.csv", delimiter=",", engine="python")
+# print(df.columns)
+
+# [leNet5_original_size, leNet300_original_size, alexnet_original_size, vgg16_original_size] = df.query('pruning == "no_prune" and quantization == "no_quantize"')['size (MB)'].values
+# leNet5_sizes= df.query('model == "lenet5"')['size (MB)']
+# print(leNet5_sizes)
+# lenet5_compressions = leNet5_sizes/leNet5_original_size
+
+# print(lenet5_compressions)
+
+# leNet300_results = df.query('model == "leNet300"')
+
+# alexnet_results = df.query('model == "alexnet"')
+
+# vgg16_results = df.query('model == "vgg16"')

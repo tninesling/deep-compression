@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.utils.prune as prune
+import scipy.sparse as sp
 
 prune_amount = 0.2
 
@@ -25,6 +26,8 @@ def l1_unstructured_prune(model):
         if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
             prune.l1_unstructured(module, name="weight", amount=prune_amount)
             prune.remove(module, "weight")
+            sparse_weight = sp.csr_matrix(module.weight.detach().numpy())
+            module.weight.data = torch.from_numpy(sparse_weight.toarray())
     return model
 
 
@@ -33,6 +36,8 @@ def random_unstructured_prune(model):
         if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
             prune.random_unstructured(module, name="weight", amount=prune_amount)
             prune.remove(module, "weight")
+            sparse_weight = sp.csr_matrix(module.weight.detach().numpy())
+            module.weight.data = torch.from_numpy(sparse_weight.toarray())
     return model
 
 
@@ -47,6 +52,8 @@ def global_unstructured_prune(model):
     for name, module in model.named_modules():
         if isinstance(module, nn.Linear):
             prune.remove(module, "weight")
+            sparse_weight = sp.csr_matrix(module.weight.detach().numpy())
+            module.weight.data = torch.from_numpy(sparse_weight.toarray())
     return model
 
 def ln_structured_prune(model, amount, n):
@@ -56,6 +63,8 @@ def ln_structured_prune(model, amount, n):
         if hasattr(module, "weight") and isinstance(module.weight, torch.Tensor):
             prune.ln_structured(module, name="weight", amount=amount, n=n, dim=0)
             prune.remove(module, "weight")
+            sparse_weight = sp.csr_matrix(module.weight.detach().numpy())
+            module.weight.data = torch.from_numpy(sparse_weight.toarray())
     count_unpruned_weights(model)
     return model
 
